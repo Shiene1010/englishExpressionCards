@@ -1,0 +1,317 @@
+import SwiftUI
+import Combine
+
+// 카드 데이터 모델
+struct Card: Codable, Identifiable {
+    var id = UUID()
+    var expression: String
+    var meaning: String
+    var example: String
+    var createdAt: String
+}
+
+// GitHub API 업로드 담당 클래스
+class GitHubUploader: ObservableObject {
+    let token: String
+    let owner: String = "Shiene1010"
+    let repo: String = "englishExpressionCards"
+    let branch: String = "main"
+    
+    init(token: String) {
+        self.token = token
+    }
+
+    func uploadFile(path: String, content: Data, message: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        getFileSha(path: path) { shaResult in
+            switch shaResult {
+            case .success(let sha):
+                self.sendPutRequest(path: path, content: content, message: message, sha: sha, completion: completion)
+            case .failure:
+                self.sendPutRequest(path: path, content: content, message: message, sha: nil, completion: completion)
+            }
+        }
+    }
+
+    private func getFileSha(path: String, completion: @escaping (Result<String?, Error>) -> Void) {
+        let urlStr = "https://api.github.com/repos/\(owner)/\(repo)/contents/\(path)?ref=\(branch)"
+        guard let url = URL(string: urlStr) else {
+            completion(.failure(NSError(domain: "Invalid URL", code: 1)))
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let data = data else {
+                completion(.failure(NSError(domain: "No data", code: 2)))
+                return
+            }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let sha = json["sha"] as? String {
+                completion(.success(sha))
+            } else {
+                completion(.success(nil))
+            }
+        }.resume()
+    }
+
+    private func sendPutRequest(path: String, content: Data, message: String, sha: String?, completion: @escaping (Result<Void, Error>) -> Void) {
+        let urlStr = "https://api.github.com/repos/\(owner)/\(repo)/contents/\(path)"
+        guard let url = URL(string: urlStr) else {
+            completion(.failure(NSError(domain: "Invalid URL", code: 1)))
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let base64Content = content.base64EncodedString()
+        var bodyDict: [String: Any] = [
+            "message": message,
+            "content": base64Content,
+            "branch": branch
+        ]
+        if let sha = sha {
+            bodyDict["sha"] = sha
+        }
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: bodyDict)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let resp = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "Invalid response", code: 3)))
+                return
+            }
+            if resp.statusCode == 200 || resp.statusCode == 201 {
+                completion(.success(()))
+            } else {
+                completion(.failure(NSError(domain: "GitHub API error", code: resp.statusCode)))
+            }
+        }.resume()
+    }
+}
+
+// 뷰 모델: 카드 생성, 관리, 업로드 기능
+class CardViewModel: ObservableObject {
+    @Published var expression = ""
+    @Published var meaning = ""
+    @Published var example = ""
+    @Published var cards: [Card] = []
+    
+    private var uploader: GitHubUploader
+
+    // 본인의 GitHub Personal Access Token 으로 교체하세요
+    init() {
+        let token = "<YOUR_PERSONAL_ACCESS_TOKEN>"
+        uploader = GitHubUploader(token: token)
+    }
+    
+    func createCard() {
+        let now = ISO8601DateFormatter().string(from: Date())
+        let card = Card(expression: expression, meaning: meaning, example: example, createdAt: now)
+        cards.append(card)
+        saveAndUploadCard(card)
+        clearInput()
+    }
+    
+    private func saveAndUploadCard(_ card: Card) {
+        do {
+            let data = try JSONEncoder().encode(card)
+            let filename = "\(card.expression).json"
+            uploader.uploadFile(path: filename, content: data, message: "Add card \(card.expression)") { result in
+                switch result {
+                case .success:
+                    self.updateCentralPage()
+                case .failure(let error):
+                    print("Upload card error: \(error.localizedDescription)")
+                }
+            }
+        } catch {
+            print("Encoding error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func updateCentralPage() {
+        do {
+            let data = try JSONEncoder().encode(cards)
+            uploader.uploadFile(path: "expressionsPage.json", content: data, message: "Update central page cards list") { result in
+                if case .failure(let error) = result {
+                    print("Updating central page error: \(error.localizedDescription)")
+                }
+            }
+        } catch {
+            print("Encoding central page error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func clearInput() {
+        DispatchQueue.main.async {
+            self.expression = ""
+            self.meaning = ""
+            self.example = ""
+        }
+    }
+}
+
+// UI 뷰 정의
+struct ContentView: View {
+    @StateObject var viewModel = CardViewModel()
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TextField("Expression", text: $viewModel.expression)
+                .textFieldStyle(.roundedBorder)
+            TextField("Meaning", text: $viewModel.meaning)
+                .textFieldStyle(.roundedBorder)
+            TextField("Example", text: $viewModel.example)
+                .textFieldStyle(.roundedBorder)
+            
+            Button("Create Card") {
+                viewModel.createCard()
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.vertical, 10)
+
+            List(viewModel.cards) { card in
+                VStack(alignment: .leading) {
+                    Text(card.expression).font(.headline)
+                    Text(card.meaning)
+                    Text(card.example).italic()
+                    Text(card.createdAt).font(.caption).foregroundColor(.gray)
+                }
+                .padding(4)
+            }
+        }
+        .padding()
+    }
+}
+
+// 앱 진입점
+@main
+struct CardMakerApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+
+
+import SwiftUI
+
+struct Card: Codable, Identifiable, Hashable {
+    var id: String
+    var expression: String
+    var meaning: String
+    var example: String
+    var createdAt: String
+}
+
+class CardListFetcher: ObservableObject {
+    @Published var cards: [Card] = []
+    @Published var errorMessage: String?
+
+    func fetchCards(from urlString: String) {
+        guard let url = URL(string: urlString) else {
+            errorMessage = "Invalid URL"
+            return
+        }
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.errorMessage = "Network error: \(error.localizedDescription)"
+                    return
+                }
+                guard let data = data else {
+                    self.errorMessage = "No data received"
+                    return
+                }
+                do {
+                    let decoded = try JSONDecoder().decode([Card].self, from: data)
+                    self.cards = decoded
+                    self.errorMessage = nil
+                } catch {
+                    self.errorMessage = "Decoding error: \(error.localizedDescription)"
+                }
+            }
+        }.resume()
+    }
+}
+
+struct ContentView: View {
+    @StateObject private var cardListFetcher = CardListFetcher()
+    @State private var selectedCard: Card?
+
+    let cardListURL = "https://shiene1010.github.io/englishExpressionCards/expressionsPage.json"
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Available Cards")
+                    .font(.headline)
+                    .padding(.top)
+
+                if let error = cardListFetcher.errorMessage {
+                    Text("Error: \(error)").foregroundColor(.red)
+                }
+
+                List(selection: $selectedCard) {
+                    ForEach(cardListFetcher.cards) { card in
+                        Text(card.expression)
+                            .tag(card)
+                    }
+                }
+                .listStyle(PlainListStyle())
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    if let card = selectedCard {
+                        Text("Expression: \(card.expression)").font(.title)
+                        Text("Meaning: \(card.meaning)").font(.headline)
+                        Text("Example: \(card.example)").italic()
+                        Text("Created At: \(card.createdAt)").font(.caption)
+                    } else {
+                        Text("Select a card from the list")
+                            .italic()
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("English Cards")
+            .onAppear {
+                cardListFetcher.fetchCards(from: cardListURL)
+            }
+            // 강제로 선택 상태 갱신 트리거를 위해 onTapGesture로 리셋 후 재할당
+            .onChange(of: selectedCard) { selected in
+                guard let selected = selected else { return }
+                DispatchQueue.main.async {
+                    // 임시로 선택 해제 → 재선택해서 강제 UI 갱신 유도
+                    let cardToReSelect = selected
+                    selectedCard = nil
+                    selectedCard = cardToReSelect
+                }
+            }
+        }
+    }
+}
+
+@main
+struct CardListApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
