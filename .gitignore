@@ -1,0 +1,29 @@
+# macOS 관련
+.DS_Store
+
+# Xcode 관련
+build/
+DerivedData/
+*.xcworkspace
+*.xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+# SwiftPM
+.build/
+
+# 사용자 설정 파일
+*.swp
+*.lock
+*.swm
+
+# 기타
+.idea/
+.vscode/
+*.log
+*.tmp
+
+# 앱에서 생성하는 데이터 (필요에 따라 추가)
+*.json
