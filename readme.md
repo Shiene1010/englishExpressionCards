@@ -2,9 +2,9 @@
 
 ## Card JSON Files
 
-- [테스트.json](https://shiene1010.github.io/englishExpressionCards/Test.json)
-- [테스트02.json](https://shiene1010.github.io/englishExpressionCards/Test02.json)
-- [test.json](https://shiene1010.github.io/englishExpressionCards/expressionsPage.json)
+- [Test.json](https://shiene1010.github.io/englishExpressionCards/Test.json)
+- [Test02.json](https://shiene1010.github.io/englishExpressionCards/Test02.json)
+- [expressionsPage.json](https://shiene1010.github.io/englishExpressionCards/expressionsPage.json)
 
 ...
 
