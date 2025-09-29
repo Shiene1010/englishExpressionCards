@@ -1,121 +1,105 @@
+***
 
-
-## Card JSON Files
-
-- [Test.json](https://shiene1010.github.io/englishExpressionCards/Test.json)
-- [Test02.json](https://shiene1010.github.io/englishExpressionCards/Test02.json)
-- [expressionsPage.json](https://shiene1010.github.io/englishExpressionCards/expressionsPage.json)
-
-...
-
-
-```markdown
 # English Expression Cards Ecosystem
 
-This project provides a system for creating, managing, and using English expression cards as JSON files, hosted on GitHub Pages. The project consists of macOS and iOS apps to facilitate easy creation and usage of these expression cards.
+This project creates and manages English expression JSON cards hosted on GitHub Pages, with accompanying macOS and iOS apps for creation, viewing, and learning.
 
-## Features
+***
 
-- Create English expression cards with expression, meaning, and examples.
-- Store each card as an individual JSON file hosted on GitHub Pages.
-- Maintain a central page to list and download available cards.
-- MacOS app to create and upload cards and update the central page.
-- iOS app to download selected cards and build personalized decks.
-- Efficient updates without resubmitting apps to the App Store.
-- Designed for language learners and educators.
+## Project Overview
+
+- Each English expression is stored as a separate JSON file in the root of the GitHub repository.
+- `expressionsPage.json` holds an array of all card objects currently available.
+- The iOS app fetches `expressionsPage.json` to display the list of available cards.
+- Users can select a card to view detailed information fetched from the corresponding JSON file.
+- GitHub Pages hosts these JSON files, allowing dynamic updates without app re-release.
+
+***
+
+## Project Structure
+
+- **expressionsPage.json**: JSON array of card objects available for learning.
+- **Individual JSON card files**: e.g., `Test.json`, `Test02.json` in the root repository.
+- **macOS/iOS Apps**: SwiftUI-based apps using the GitHub Pages URLs to fetch and display cards.
+
+***
+
+## JSON Card Example
+
+```json
+{
+  "id": "D3570420-9C46-4795-95D2-3E02DFC641DE",
+  "expression": "Test",
+  "meaning": "테스트",
+  "example": "Test it",
+  "createdAt": "2025-09-29T14:55:52Z"
+}
+```
+
+***
+
+## ExpressionsPage.json Example
+
+```json
+[
+  {
+    "id": "D3570420-9C46-4795-95D2-3E02DFC641DE",
+    "expression": "Test",
+    "meaning": "테스트",
+    "example": "Test it",
+    "createdAt": "2025-09-29T14:55:52Z"
+  },
+  {
+    "id": "B5B88622-4430-4B9C-834B-26997F0C17EE",
+    "expression": "Test02",
+    "meaning": "두번째",
+    "example": "Test twice",
+    "createdAt": "2025-09-29T14:56:23Z"
+  }
+]
+```
+
+***
+
+## App Usage
+
+- The app fetches `expressionsPage.json` from GitHub Pages URL.
+- Displays a list of expressions based on the fetched JSON array.
+- When a user selects an expression, the app displays full details of the expression.
+- The app supports offline viewing if JSON data is cached (future enhancement).
+
+***
+
+## Development Environment
+
+- macOS Sonoma 14.7.1, Xcode 15.4, Swift 5+
+- Target platforms: macOS 14.5+, iOS 16.6+
+- SwiftUI framework used for UI development
+
+***
+
+## Future Enhancements
+
+- Add editing and updating cards via the app, syncing to GitHub.
+- Text-to-Speech on expressions and examples.
+- Offline support with local caching.
+- User favorites and deck creation for custom learning.
+- Multi-language support and phonetic/intonation training.
+
+***
 
 ## Getting Started
 
-### Prerequisites
+1. Clone the repository.
+2. Open the Xcode project.
+3. Edit `ContentView.swift` to configure your GitHub Pages URL if needed.
+4. Build and run the app on macOS or iOS devices.
+5. Ensure `expressionsPage.json` and card JSON files are correctly hosted on GitHub Pages.
 
-- Xcode 15 or newer
-- Swift 5.9+
-- A GitHub account with a Personal Access Token (PAT) with repo permissions
-- macOS 14.5+ for development and testing
-- iOS 16.4+ device or simulator for iOS app testing
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/Shiene1010/englishExpressionCards.git
-   ```
-2. Open the project in Xcode.
-3. Configure your GitHub Personal Access Token securely to enable API access.
-4. Build and run the macOS or iOS app targets.
-
-## Usage
-
-- Use the macOS app to create new English expression cards and upload them to GitHub.
-- The iOS app fetches available cards from GitHub Pages and allows selective downloads.
-- Cards are stored as JSON files, making them easy to edit and share.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit pull requests.
-
-## License
-
-This project is licensed under the MIT License.
+***
 
 ## Contact
 
-For questions or feedback, please contact: whatwillmyversebe@naver.com
-```
+For questions or contributions, please contact [Your Contact Info].
 
-필요 시 추가 기능 설명이나 설치 가이드 등 맞춤형으로 내용 확장 가능합니다.아래는 "englishExpressionCards" 레포지토리에 올릴 README.md 파일 예시입니다.
-
-```markdown
-# English Expression Cards Ecosystem
-
-This project provides a system for creating, managing, and using English expression cards as JSON files, hosted on GitHub Pages. The project consists of macOS and iOS apps to facilitate easy creation and usage of these expression cards.
-
-## Features
-
-- Create English expression cards with expression, meaning, and examples.
-- Store each card as an individual JSON file hosted on GitHub Pages.
-- Maintain a central page to list and download available cards.
-- MacOS app to create and upload cards and update the central page.
-- iOS app to download selected cards and build personalized decks.
-- Efficient updates without resubmitting apps to the App Store.
-- Designed for language learners and educators.
-
-## Getting Started
-
-### Prerequisites
-
-- Xcode 15 or newer
-- Swift 5.9+
-- A GitHub account with a Personal Access Token (PAT) with repo permissions
-- macOS 14.5+ for development and testing
-- iOS 16.4+ device or simulator for iOS app testing
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/Shiene1010/englishExpressionCards.git
-   ```
-2. Open the project in Xcode.
-3. Configure your GitHub Personal Access Token securely to enable API access.
-4. Build and run the macOS or iOS app targets.
-
-## Usage
-
-- Use the macOS app to create new English expression cards and upload them to GitHub.
-- The iOS app fetches available cards from GitHub Pages and allows selective downloads.
-- Cards are stored as JSON files, making them easy to edit and share.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit pull requests.
-
-## License
-
-This project is licensed under the MIT License.
-
-## Contact
-
-For questions or feedback, please contact: whatwillmyversebe@naver.com
-```
-
+***
